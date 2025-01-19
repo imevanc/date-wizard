@@ -102,10 +102,7 @@ withFormat<NewFormat extends DateFormat | CustomFormat>(newFormat: NewFormat): C
 
 Creates a new ChronoBox instance with a different format.
 
----
-```typescript
-newFormat: The new format for the date.
-```
+- newFormat: The new format for the date.
 - returns: A new ChronoBox instance with the updated format.
 
 ## 📝 Contributing
