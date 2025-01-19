@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/imevanc/chronobox/compare/v1.1.1...v1.1.2) (2025-01-19)
+
+
+### Bug Fixes
+
+* add readme ([#10](https://github.com/imevanc/chronobox/issues/10)) ([5448b23](https://github.com/imevanc/chronobox/commit/5448b2379aa3d2b7586d2841acdc0c52586a6990))
+
 ## [1.1.1](https://github.com/imevanc/chronobox/compare/v1.1.0...v1.1.1) (2025-01-19)
 
 
