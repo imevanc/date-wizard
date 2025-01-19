@@ -102,14 +102,12 @@ withFormat<NewFormat extends DateFormat | CustomFormat>(newFormat: NewFormat): C
 
 Creates a new ChronoBox instance with a different format.
 
----
-```typescript
-newFormat: The new format for the date.
-```
+- newFormat: The new format for the date.
 - returns: A new ChronoBox instance with the updated format.
 
 ## 📝 Contributing
 Contributions are welcome! Please follow these steps:
+
 
 1. Fork this repository.
 2. Create a feature branch: git checkout -b feat/feature-name.
