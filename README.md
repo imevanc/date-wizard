@@ -107,3 +107,18 @@ Creates a new ChronoBox instance with a different format.
 newFormat: The new format for the date.
 ```
 - returns: A new ChronoBox instance with the updated format.
+
+## 📝 Contributing
+Contributions are welcome! Please follow these steps:
+
+1. Fork this repository.
+2. Create a feature branch: git checkout -b feat/feature-name.
+3. Commit your changes: git commit -m "feat: add feature-name".
+4. Push to your branch: git push origin feat/feature-name.
+5. Open a pull request.
+
+## 📄 License
+ChronoBox is open-source software, licensed under the MIT License.
+
+## ❤️ Support
+If you find ChronoBox helpful, please give it a ⭐️ on GitHub and share it with your fellow developers!
