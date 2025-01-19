@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/imevanc/chronobox/compare/v1.0.0...v1.1.0) (2025-01-19)
+
+
+### Features
+
+* rename pkg ([#8](https://github.com/imevanc/chronobox/issues/8)) ([f14d0d8](https://github.com/imevanc/chronobox/commit/f14d0d858bfb45757dc0d6220a54e753f7ea3f5a))
+
 # 1.0.0 (2025-01-19)
 
 
