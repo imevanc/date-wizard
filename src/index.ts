@@ -5,12 +5,10 @@ import {
   DateInput,
   TimeUnit,
 } from "./types";
-import { DateWizardError } from "./errors";
+import { ChronoBoxError } from "./errors";
 import { isValidTimeUnit } from "./utils";
 
-export class DateWizard<
-  TFormat extends DateFormat | CustomFormat = DateFormat
-> {
+export class ChronoBox<TFormat extends DateFormat | CustomFormat = DateFormat> {
   private readonly date: Date;
   private readonly format: TFormat;
 
@@ -20,10 +18,10 @@ export class DateWizard<
     try {
       this.date = date ? new Date(date) : new Date();
       if (isNaN(this.date.getTime())) {
-        throw new DateWizardError("Invalid date input");
+        throw new ChronoBoxError("Invalid date input");
       }
     } catch (error) {
-      throw new DateWizardError(
+      throw new ChronoBoxError(
         `Failed to parse date: ${
           error instanceof Error ? error.message : "Unknown error"
         }`
@@ -34,7 +32,7 @@ export class DateWizard<
   /**
    * Add a specified amount of time units to the date
    */
-  add<T extends TimeUnit>(amount: number, unit: T): DateWizard<TFormat> {
+  add<T extends TimeUnit>(amount: number, unit: T): ChronoBox<TFormat> {
     const newDate = new Date(this.date);
 
     switch (unit) {
@@ -82,16 +80,16 @@ export class DateWizard<
       }
       default:
         const _exhaustiveCheck: never = unit;
-        throw new DateWizardError(`Unsupported time unit: ${unit}`);
+        throw new ChronoBoxError(`Unsupported time unit: ${unit}`);
     }
 
-    return new DateWizard<TFormat>(newDate, this.format);
+    return new ChronoBox<TFormat>(newDate, this.format);
   }
 
   /**
    * Subtract a specified amount of time units from the date
    */
-  subtract<T extends TimeUnit>(amount: number, unit: T): DateWizard<TFormat> {
+  subtract<T extends TimeUnit>(amount: number, unit: T): ChronoBox<TFormat> {
     return this.add(-amount, unit);
   }
 
@@ -103,7 +101,7 @@ export class DateWizard<
     const diffMs = this.date.getTime() - otherDate.getTime();
 
     if (!isValidTimeUnit(unit)) {
-      throw new DateWizardError(`Unsupported time unit: ${unit}`);
+      throw new ChronoBoxError(`Unsupported time unit: ${unit}`);
     }
 
     switch (unit) {
@@ -128,7 +126,7 @@ export class DateWizard<
         return this.date.getFullYear() - otherDate.getFullYear();
       default:
         const _exhaustiveCheck: never = unit;
-        throw new DateWizardError(`Unsupported time unit: ${unit}`);
+        throw new ChronoBoxError(`Unsupported time unit: ${unit}`);
     }
   }
 
@@ -192,11 +190,11 @@ export class DateWizard<
   }
 
   /**
-   * Create a new DateWizard with a different format
+   * Create a new ChronoBox with a different format
    */
   withFormat<NewFormat extends DateFormat | CustomFormat>(
     newFormat: NewFormat
-  ): DateWizard<NewFormat> {
-    return new DateWizard<NewFormat>(this.date, newFormat);
+  ): ChronoBox<NewFormat> {
+    return new ChronoBox<NewFormat>(this.date, newFormat);
   }
 }

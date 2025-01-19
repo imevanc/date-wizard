@@ -1,9 +1,9 @@
-import { DateWizard } from "../src";
+import { ChronoBox } from "../src";
 import { DateFormat, TimeUnit } from "../src/types";
-import { DateWizardError } from "../src/errors";
+import { ChronoBoxError } from "../src/errors";
 
 describe("diff", () => {
-  const baseDate = new DateWizard("2024-01-15");
+  const baseDate = new ChronoBox("2024-01-15");
 
   test.each([
     ["days", "2024-01-10", TimeUnit.DAYS, 5],
@@ -37,12 +37,12 @@ describe("Format handling", () => {
     [DateFormat.EU, "2024-01-01", "01.01.2024"],
     [DateFormat.VERBOSE, "2024-01-01", "January 01, 2024"],
   ])("handles %s format correctly", (format, input, expected) => {
-    const wizard = new DateWizard(input, format);
+    const wizard = new ChronoBox(input, format);
     expect(wizard.formatDate()).toBe(expected);
   });
 
   test("handles custom format", () => {
-    const wizard = new DateWizard<"DD-MM-YYYY">("2024-01-01", "DD-MM-YYYY");
+    const wizard = new ChronoBox<"DD-MM-YYYY">("2024-01-01", "DD-MM-YYYY");
     expect(wizard.formatDate()).toBe("01-01-2024");
   });
 });
@@ -57,7 +57,7 @@ describe("Time unit operations", () => {
       [TimeUnit.MINUTES, 60, 60 * 60 * 1000],
       [TimeUnit.HOURS, 24, 24 * 60 * 60 * 1000],
     ])("adds %s correctly", (unit, amount, expectedDeltaMs) => {
-      const wizard = new DateWizard(baseDate);
+      const wizard = new ChronoBox(baseDate);
       const result = wizard.add(amount, unit).toDate();
       expect(result.getTime() - wizard.toDate().getTime()).toBe(
         expectedDeltaMs
@@ -70,7 +70,7 @@ describe("Time unit operations", () => {
       [TimeUnit.MONTHS, 1, "2024-02-01"],
       [TimeUnit.YEARS, 1, "2025-01-01"],
     ])("adds %s correctly", (unit, amount, expected) => {
-      const wizard = new DateWizard(baseDate);
+      const wizard = new ChronoBox(baseDate);
       expect(wizard.add(amount, unit).formatDate()).toBe(expected);
     });
 
@@ -79,7 +79,7 @@ describe("Time unit operations", () => {
       ["negative months", TimeUnit.MONTHS, -1, "2023-12-01"],
       ["negative years", TimeUnit.YEARS, -1, "2023-01-01"],
     ])("handles %s correctly", (_, unit, amount, expected) => {
-      const wizard = new DateWizard("2024-01-01");
+      const wizard = new ChronoBox("2024-01-01");
       expect(wizard.add(amount, unit).formatDate()).toBe(expected);
     });
 
@@ -92,7 +92,7 @@ describe("Time unit operations", () => {
     ])(
       "handles month overflow from %s",
       (_, startDate, monthsToAdd, expected) => {
-        const wizard = new DateWizard(startDate);
+        const wizard = new ChronoBox(startDate);
         expect(wizard.add(monthsToAdd, TimeUnit.MONTHS).formatDate()).toBe(
           expected
         );
@@ -108,14 +108,14 @@ describe("Time unit operations", () => {
       [TimeUnit.MONTHS, 1, "2023-12-15"],
       [TimeUnit.YEARS, 1, "2023-01-15"],
     ])("subtracts %s correctly", (unit, amount, expected) => {
-      const wizard = new DateWizard(baseDate);
+      const wizard = new ChronoBox(baseDate);
       expect(wizard.subtract(amount, unit).formatDate()).toBe(expected);
     });
   });
 });
 
 describe("diff", () => {
-  const baseDate = new DateWizard("2024-01-15");
+  const baseDate = new ChronoBox("2024-01-15");
 
   test.each([
     ["days", "2024-01-10", TimeUnit.DAYS, 5],
@@ -149,14 +149,14 @@ describe("diff", () => {
       expect(() => {
         baseDate.diff("2024-01-10", unsupportedUnit as any);
       }).toThrow(
-        new DateWizardError(`Unsupported time unit: ${unsupportedUnit}`)
+        new ChronoBoxError(`Unsupported time unit: ${unsupportedUnit}`)
       );
     }
   );
 });
 
 test("returns correct date components", () => {
-  const date = new DateWizard("2024-01-15T12:30:45.123");
+  const date = new ChronoBox("2024-01-15T12:30:45.123");
   expect(date.getComponents()).toEqual({
     year: 2024,
     month: 1,
@@ -169,7 +169,7 @@ test("returns correct date components", () => {
 });
 
 describe("withFormat", () => {
-  const date = new DateWizard("2024-01-15", DateFormat.ISO);
+  const date = new ChronoBox("2024-01-15", DateFormat.ISO);
 
   test.each([
     [DateFormat.US, "01/15/2024"],

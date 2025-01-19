@@ -1,6 +1,6 @@
-export class DateWizardError extends Error {
+export class ChronoBoxError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = "DateWizardError";
+    this.name = "ChronoBoxError";
   }
 }
