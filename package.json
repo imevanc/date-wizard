@@ -6,13 +6,13 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "prettier:fix": "prettier --write \"./**/*.{ts,tsx}\"",
     "prettier:check": "prettier --check \"./**/*.{ts,tsx}\"",
+    "prettier:fix": "prettier --write \"./**/*.{ts,tsx}\"",
     "test:type": "tsc --noEmit",
     "test:unit": "jest",
     "test:coverage": "jest --collectCoverage --",
     "test:unit:watch": "jest --watch",
-    "prepare": "npm run build"
+    "prepare": "husky"
   },
   "keywords": [
     "date",
@@ -20,12 +20,20 @@
     "typescript",
     "manipulation"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/imevanc/date-wizard.git"
+  },
   "author": "Evan Charalampidis",
   "license": "MIT",
   "devDependencies": {
+    "@semantic-release/github": "^11.0.1",
+    "@semantic-release/npm": "^12.0.1",
     "@types/jest": "^29.5.14",
+    "husky": "^9.1.7",
     "jest": "^29.7.0",
     "prettier": "^2.8.8",
+    "semantic-release": "^24.2.1",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3"
