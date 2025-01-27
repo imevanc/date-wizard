@@ -1,5 +1,5 @@
 import { ChronoBox } from "../src";
-import { DateFormat, TimeUnit } from "../src/types";
+import { DateFormat, TimeUnit } from "../src/enums";
 import { ChronoBoxError } from "../src/errors";
 
 describe("diff", () => {
