@@ -1,4 +1,4 @@
-import { TimeUnit } from "./types";
+import { TimeUnit } from "./enums";
 
 export const isValidTimeUnit = (unit: any): unit is TimeUnit =>
   unit === TimeUnit.MILLISECONDS ||
