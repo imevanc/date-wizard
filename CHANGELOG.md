@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/imevanc/chronobox/compare/v1.1.2...v1.2.0) (2025-01-27)
+
+
+### Features
+
+* configure tsup builder ([#11](https://github.com/imevanc/chronobox/issues/11)) ([5ed4386](https://github.com/imevanc/chronobox/commit/5ed438625d378dfefea4eef0503da48a3b41c747))
+
 ## [1.1.2](https://github.com/imevanc/chronobox/compare/v1.1.1...v1.1.2) (2025-01-19)
 
 
