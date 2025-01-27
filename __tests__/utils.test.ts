@@ -1,4 +1,4 @@
-import { TimeUnit } from "../src/types";
+import { TimeUnit } from "../src/enums";
 import { isValidTimeUnit } from "../src/utils";
 
 describe("isValidTimeUnit", () => {

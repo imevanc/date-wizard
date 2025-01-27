@@ -1,58 +1,56 @@
-import type { CustomFormat, DateComponents, DateInput } from "./types.d.ts";
+// src/errors.ts
+var ChronoBoxError = class extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "ChronoBoxError";
+  }
+};
 
-import { ChronoBoxError } from "./errors";
-import { isValidTimeUnit } from "./utils";
-import { DateFormat, TimeUnit } from "./enums";
+// src/utils.ts
+var isValidTimeUnit = (unit) => unit === "milliseconds" /* MILLISECONDS */ || unit === "seconds" /* SECONDS */ || unit === "minutes" /* MINUTES */ || unit === "hours" /* HOURS */ || unit === "days" /* DAYS */ || unit === "weeks" /* WEEKS */ || unit === "months" /* MONTHS */ || unit === "years" /* YEARS */;
 
-export class ChronoBox<TFormat extends DateFormat | CustomFormat = DateFormat> {
-  private readonly date: Date;
-  private readonly format: TFormat;
-
-  constructor(date?: DateInput, format: TFormat = DateFormat.ISO as TFormat) {
+// src/index.ts
+var ChronoBox = class _ChronoBox {
+  constructor(date, format = "YYYY-MM-DD" /* ISO */) {
     this.format = format;
-
     try {
-      this.date = date ? new Date(date) : new Date();
+      this.date = date ? new Date(date) : /* @__PURE__ */ new Date();
       if (isNaN(this.date.getTime())) {
         throw new ChronoBoxError("Invalid date input");
       }
     } catch (error) {
       throw new ChronoBoxError(
-        `Failed to parse date: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
+        `Failed to parse date: ${error instanceof Error ? error.message : "Unknown error"}`
       );
     }
   }
-
   /**
    * Add a specified amount of time units to the date
    */
-  add<T extends TimeUnit>(amount: number, unit: T): ChronoBox<TFormat> {
+  add(amount, unit) {
     const newDate = new Date(this.date);
-
     switch (unit) {
-      case TimeUnit.MILLISECONDS:
+      case "milliseconds" /* MILLISECONDS */:
         newDate.setMilliseconds(newDate.getMilliseconds() + amount);
         break;
-      case TimeUnit.SECONDS:
+      case "seconds" /* SECONDS */:
         newDate.setSeconds(newDate.getSeconds() + amount);
         break;
-      case TimeUnit.MINUTES:
+      case "minutes" /* MINUTES */:
         newDate.setMinutes(newDate.getMinutes() + amount);
         break;
-      case TimeUnit.HOURS:
+      case "hours" /* HOURS */:
         newDate.setHours(newDate.getHours() + amount);
         break;
-      case TimeUnit.DAYS:
+      case "days" /* DAYS */:
         newDate.setDate(newDate.getDate() + amount);
         break;
-      case TimeUnit.WEEKS:
+      case "weeks" /* WEEKS */:
         newDate.setDate(newDate.getDate() + amount * 7);
         break;
-      case TimeUnit.MONTHS: {
+      case "months" /* MONTHS */: {
         const dayOfMonth = newDate.getDate();
-        newDate.setDate(1); // Temporarily set to the first of the month
+        newDate.setDate(1);
         newDate.setMonth(newDate.getMonth() + amount);
         const maxDaysInNewMonth = new Date(
           newDate.getFullYear(),
@@ -62,9 +60,9 @@ export class ChronoBox<TFormat extends DateFormat | CustomFormat = DateFormat> {
         newDate.setDate(Math.min(dayOfMonth, maxDaysInNewMonth));
         break;
       }
-      case TimeUnit.YEARS: {
+      case "years" /* YEARS */: {
         const dayOfMonth = newDate.getDate();
-        newDate.setDate(1); // Temporarily set to the first of the month
+        newDate.setDate(1);
         newDate.setFullYear(newDate.getFullYear() + amount);
         const maxDaysInNewMonth = new Date(
           newDate.getFullYear(),
@@ -75,61 +73,52 @@ export class ChronoBox<TFormat extends DateFormat | CustomFormat = DateFormat> {
         break;
       }
       default:
-        const _exhaustiveCheck: never = unit;
+        const _exhaustiveCheck = unit;
         throw new ChronoBoxError(`Unsupported time unit: ${unit}`);
     }
-
-    return new ChronoBox<TFormat>(newDate, this.format);
+    return new _ChronoBox(newDate, this.format);
   }
-
   /**
    * Subtract a specified amount of time units from the date
    */
-  subtract<T extends TimeUnit>(amount: number, unit: T): ChronoBox<TFormat> {
+  subtract(amount, unit) {
     return this.add(-amount, unit);
   }
-
   /**
    * Get the difference between two dates in the specified unit
    */
-  diff(other: DateInput, unit: TimeUnit = TimeUnit.DAYS): number {
+  diff(other, unit = "days" /* DAYS */) {
     const otherDate = new Date(other);
     const diffMs = this.date.getTime() - otherDate.getTime();
-
     if (!isValidTimeUnit(unit)) {
       throw new ChronoBoxError(`Unsupported time unit: ${unit}`);
     }
-
     switch (unit) {
-      case TimeUnit.MILLISECONDS:
+      case "milliseconds" /* MILLISECONDS */:
         return diffMs;
-      case TimeUnit.SECONDS:
-        return diffMs / 1000;
-      case TimeUnit.MINUTES:
-        return diffMs / (1000 * 60);
-      case TimeUnit.HOURS:
-        return diffMs / (1000 * 60 * 60);
-      case TimeUnit.DAYS:
-        return diffMs / (1000 * 60 * 60 * 24);
-      case TimeUnit.WEEKS:
-        return diffMs / (1000 * 60 * 60 * 24 * 7);
-      case TimeUnit.MONTHS:
-        return (
-          (this.date.getFullYear() - otherDate.getFullYear()) * 12 +
-          (this.date.getMonth() - otherDate.getMonth())
-        );
-      case TimeUnit.YEARS:
+      case "seconds" /* SECONDS */:
+        return diffMs / 1e3;
+      case "minutes" /* MINUTES */:
+        return diffMs / (1e3 * 60);
+      case "hours" /* HOURS */:
+        return diffMs / (1e3 * 60 * 60);
+      case "days" /* DAYS */:
+        return diffMs / (1e3 * 60 * 60 * 24);
+      case "weeks" /* WEEKS */:
+        return diffMs / (1e3 * 60 * 60 * 24 * 7);
+      case "months" /* MONTHS */:
+        return (this.date.getFullYear() - otherDate.getFullYear()) * 12 + (this.date.getMonth() - otherDate.getMonth());
+      case "years" /* YEARS */:
         return this.date.getFullYear() - otherDate.getFullYear();
       default:
-        const _exhaustiveCheck: never = unit;
+        const _exhaustiveCheck = unit;
         throw new ChronoBoxError(`Unsupported time unit: ${unit}`);
     }
   }
-
   /**
    * Get individual components of the date
    */
-  getComponents(): DateComponents {
+  getComponents() {
     return {
       year: this.date.getFullYear(),
       month: this.date.getMonth() + 1,
@@ -137,14 +126,13 @@ export class ChronoBox<TFormat extends DateFormat | CustomFormat = DateFormat> {
       hours: this.date.getHours(),
       minutes: this.date.getMinutes(),
       seconds: this.date.getSeconds(),
-      milliseconds: this.date.getMilliseconds(),
+      milliseconds: this.date.getMilliseconds()
     };
   }
-
   /**
    * Format the date according to the format string
    */
-  formatDate(): string {
+  formatDate() {
     const components = this.getComponents();
     const monthNames = [
       "January",
@@ -158,39 +146,31 @@ export class ChronoBox<TFormat extends DateFormat | CustomFormat = DateFormat> {
       "September",
       "October",
       "November",
-      "December",
+      "December"
     ];
-
     let result = this.format;
-
-    // Replace tokens with actual values
-    return result
-      .replace("YYYY", components.year.toString())
-      .replace("MMMM", monthNames[components.month - 1])
-      .replace("MM", components.month.toString().padStart(2, "0"))
-      .replace("DD", components.day.toString().padStart(2, "0"));
+    return result.replace("YYYY", components.year.toString()).replace("MMMM", monthNames[components.month - 1]).replace("MM", components.month.toString().padStart(2, "0")).replace("DD", components.day.toString().padStart(2, "0"));
   }
-
   /**
    * Check if the date is valid
    */
-  isValid(): boolean {
+  isValid() {
     return !isNaN(this.date.getTime());
   }
-
   /**
    * Get the underlying Date object
    */
-  toDate(): Date {
+  toDate() {
     return new Date(this.date);
   }
-
   /**
    * Create a new ChronoBox with a different format
    */
-  withFormat<NewFormat extends DateFormat | CustomFormat>(
-    newFormat: NewFormat
-  ): ChronoBox<NewFormat> {
-    return new ChronoBox<NewFormat>(this.date, newFormat);
+  withFormat(newFormat) {
+    return new _ChronoBox(this.date, newFormat);
   }
-}
+};
+export {
+  ChronoBox
+};
+//# sourceMappingURL=index.mjs.map

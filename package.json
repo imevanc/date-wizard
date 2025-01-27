@@ -2,10 +2,11 @@
   "name": "chronobox",
   "version": "1.1.2",
   "description": "A TypeScript date manipulation library",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "tsup",
     "prettier:check": "prettier --check \"./**/*.{ts,tsx}\"",
     "prettier:fix": "prettier --write \"./**/*.{ts,tsx}\"",
     "test:type": "tsc --noEmit",
@@ -42,6 +43,7 @@
     "semantic-release": "^24.2.1",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
+    "tsup": "^8.3.6",
     "typescript": "^5.7.3"
   },
   "files": [
