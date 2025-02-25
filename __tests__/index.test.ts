@@ -1,6 +1,7 @@
 import { ChronoBox } from "../src";
 import { DateFormat, TimeUnit } from "../src/enums";
 import { ChronoBoxError } from "../src/errors";
+import { truncateDate } from "../src/utils";
 
 describe("diff", () => {
   const baseDate = new ChronoBox("2024-01-15");
@@ -182,5 +183,82 @@ describe("withFormat", () => {
     expect(date.withFormat<"DD-MM-YYYY">("DD-MM-YYYY").formatDate()).toBe(
       "15-01-2024"
     );
+  });
+});
+
+describe("isAfter", () => {
+  // Mocking the current date to control the tests
+  const mockCurrentDate = new Date("2024-02-25T15:45:30.123Z");
+  const base = new ChronoBox(mockCurrentDate);
+
+  // Creating other dates based on the current date
+  const earlier = new ChronoBox(
+    new Date(mockCurrentDate.getTime() - 60 * 60 * 1000)
+  ); // 1 hour earlier
+  const same = new ChronoBox(mockCurrentDate); // Same date
+  const later = new ChronoBox(
+    new Date(mockCurrentDate.getTime() + 60 * 60 * 1000)
+  ); // 1 hour later
+  const nextMonth = new ChronoBox(
+    new Date(mockCurrentDate.getFullYear(), mockCurrentDate.getMonth() + 1, 1)
+  );
+  const lastMonth = new ChronoBox(
+    new Date(mockCurrentDate.getFullYear(), mockCurrentDate.getMonth() - 1, 1)
+  );
+  const nextYear = new ChronoBox(
+    new Date(
+      mockCurrentDate.getFullYear() + 1,
+      mockCurrentDate.getMonth(),
+      mockCurrentDate.getDate()
+    )
+  );
+  const lastYear = new ChronoBox(
+    new Date(
+      mockCurrentDate.getFullYear() - 1,
+      mockCurrentDate.getMonth(),
+      mockCurrentDate.getDate()
+    )
+  );
+  const leapYear = new ChronoBox(new Date("2024-02-29T12:00:00.000Z"));
+  const nonLeapYear = new ChronoBox(new Date("2023-02-28T12:00:00.000Z"));
+  const utcMidnight = new ChronoBox(
+    new Date(mockCurrentDate.setHours(0, 0, 0, 0))
+  );
+  const oneMillisecondBefore = new ChronoBox(
+    new Date(mockCurrentDate.getTime() - 1)
+  );
+
+  test.each([
+    [same, TimeUnit.MILLISECONDS, false],
+    [earlier, TimeUnit.MILLISECONDS, true],
+    [earlier, TimeUnit.HOURS, true],
+    [same, TimeUnit.HOURS, false],
+    [later, TimeUnit.HOURS, false],
+    [earlier, TimeUnit.DAYS, false],
+    [later, TimeUnit.DAYS, false],
+    [nextMonth, TimeUnit.MONTHS, false],
+    [lastMonth, TimeUnit.MONTHS, true],
+    [nextYear, TimeUnit.YEARS, false],
+    [leapYear, TimeUnit.DAYS, false],
+    [nonLeapYear, TimeUnit.DAYS, true],
+    [utcMidnight, TimeUnit.DAYS, false],
+  ])(
+    "returns %s when comparing with %s granularity",
+    (other, granularity, expected) => {
+      const baseTruncated = truncateDate(base.toDate(), granularity);
+      const otherTruncated = truncateDate(other.toDate(), granularity);
+
+      console.log(
+        `Comparing: base(${baseTruncated}) with other(${otherTruncated}) at granularity ${granularity}`
+      );
+
+      expect(base.isAfter(other.toDate(), granularity)).toBe(expected);
+    }
+  );
+
+  test("throws error for unsupported time unit", () => {
+    expect(() =>
+      base.isAfter(later.toDate(), "INVALID_UNIT" as TimeUnit)
+    ).toThrow();
   });
 });

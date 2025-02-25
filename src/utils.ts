@@ -45,8 +45,8 @@ export const truncateDate = (date: Date, granularity: TimeUnit): Date => {
       newDate.setHours(0, 0, 0, 0);
       break;
     case TimeUnit.YEARS:
-      newDate.setMonth(0, 1);
-      newDate.setHours(0, 0, 0, 0);
+      newDate.setUTCFullYear(newDate.getUTCFullYear(), 0, 1);
+      newDate.setUTCHours(0, 0, 0, 0);
       break;
     case TimeUnit.MILLISECONDS:
       // No truncation needed
