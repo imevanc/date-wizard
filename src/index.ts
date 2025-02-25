@@ -27,6 +27,9 @@ export class ChronoBox<TFormat extends DateFormat | CustomFormat = DateFormat> {
 
   /**
    * Add a specified amount of time units to the date
+   * @param amount The number of units to add (can be negative to subtract)
+   * @param unit The time unit to add (milliseconds, seconds, minutes, hours, days, weeks, months, years)
+   * @returns A new ChronoBox instance with the updated date
    */
   add<T extends TimeUnit>(amount: number, unit: T): ChronoBox<TFormat> {
     const newDate = new Date(this.date);
@@ -84,6 +87,9 @@ export class ChronoBox<TFormat extends DateFormat | CustomFormat = DateFormat> {
 
   /**
    * Subtract a specified amount of time units from the date
+   * @param amount The number of units to subtract
+   * @param unit The time unit to subtract (milliseconds, seconds, minutes, hours, days, weeks, months, years)
+   * @returns A new ChronoBox instance with the updated date
    */
   subtract<T extends TimeUnit>(amount: number, unit: T): ChronoBox<TFormat> {
     return this.add(-amount, unit);
@@ -91,6 +97,9 @@ export class ChronoBox<TFormat extends DateFormat | CustomFormat = DateFormat> {
 
   /**
    * Get the difference between two dates in the specified unit
+   * @param other The date to compare with
+   * @param unit The time unit to express the difference in (defaults to days)
+   * @returns The difference between the dates in the specified unit
    */
   diff(other: DateInput, unit: TimeUnit = TimeUnit.DAYS): number {
     const otherDate = new Date(other);
@@ -128,6 +137,7 @@ export class ChronoBox<TFormat extends DateFormat | CustomFormat = DateFormat> {
 
   /**
    * Get individual components of the date
+   * @returns An object containing the year, month, day, hours, minutes, seconds, and milliseconds
    */
   getComponents(): DateComponents {
     return {
@@ -143,6 +153,7 @@ export class ChronoBox<TFormat extends DateFormat | CustomFormat = DateFormat> {
 
   /**
    * Format the date according to the format string
+   * @returns A string representation of the date formatted according to the current format
    */
   formatDate(): string {
     const components = this.getComponents();
@@ -163,7 +174,6 @@ export class ChronoBox<TFormat extends DateFormat | CustomFormat = DateFormat> {
 
     let result = this.format;
 
-    // Replace tokens with actual values
     return result
       .replace("YYYY", components.year.toString())
       .replace("MMMM", monthNames[components.month - 1])
@@ -173,6 +183,7 @@ export class ChronoBox<TFormat extends DateFormat | CustomFormat = DateFormat> {
 
   /**
    * Check if the date is valid
+   * @returns True if the date is valid, false otherwise
    */
   isValid(): boolean {
     return !isNaN(this.date.getTime());
@@ -180,6 +191,7 @@ export class ChronoBox<TFormat extends DateFormat | CustomFormat = DateFormat> {
 
   /**
    * Get the underlying Date object
+   * @returns A new Date object representing the current date
    */
   toDate(): Date {
     return new Date(this.date);
@@ -187,6 +199,8 @@ export class ChronoBox<TFormat extends DateFormat | CustomFormat = DateFormat> {
 
   /**
    * Create a new ChronoBox with a different format
+   * @param newFormat The new format to use for date formatting
+   * @returns A new ChronoBox instance with the same date but different format
    */
   withFormat<NewFormat extends DateFormat | CustomFormat>(
     newFormat: NewFormat
