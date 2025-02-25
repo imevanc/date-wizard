@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/imevanc/chronobox/compare/v1.2.0...v1.2.1) (2025-02-25)
+
+
+### Bug Fixes
+
+* add documentation comments to each method ([#17](https://github.com/imevanc/chronobox/issues/17)) ([186e47f](https://github.com/imevanc/chronobox/commit/186e47f5ccbbcd690ead339bd427d50cc2dc65bb))
+
 # [1.2.0](https://github.com/imevanc/chronobox/compare/v1.1.2...v1.2.0) (2025-01-27)
 
 
