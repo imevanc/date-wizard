@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/imevanc/chronobox/compare/v1.3.1...v1.4.0) (2025-02-26)
+
+
+### Features
+
+* create timezone function ([#20](https://github.com/imevanc/chronobox/issues/20)) ([012bbf0](https://github.com/imevanc/chronobox/commit/012bbf01c58bfc3becca0cb71f3f8c1cbdc2f78c))
+
 ## [1.3.1](https://github.com/imevanc/chronobox/compare/v1.3.0...v1.3.1) (2025-02-26)
 
 
