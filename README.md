@@ -117,6 +117,46 @@ Checks if this date is before the specified date.
 - granularity: The time unit granularity for comparison (defaults to milliseconds for exact comparison).
 - returns: true if this date is before the specified date.
 
+---
+```typescript
+convertTimezone(date: Date | ChronoBox, fromTimezone: string, toTimezone: string): Date
+```
+
+Converts a date from one timezone to another
+- date: The date to convert.
+- fromTimezone: The source timezone (e.g., 'America/New_York').
+- toTimezone: The target timezone (e.g., 'Europe/London').
+- returns: A new Date object representing the same moment in the target timezone.
+
+---
+```typescript
+getTimezoneOffsetMinutes(date: Date | ChronoBox, timezone: string): number
+```
+
+Gets the timezone offset in minutes for a date in a specific timezone.
+- date: The date to get the offset for.
+- timezone: The timezone to get the offset for (e.g., 'America/New_York').
+- returns: The timezone offset in minutes (positive for timezones behind UTC, negative for timezones ahead of UTC).
+
+---
+```typescript
+isInDST(date: Date | ChronoBox, timezone: string): boolean
+```
+
+Checks if a date is in Daylight Saving Time (DST) for a specific timezone.
+- date: The date to check.
+- timezone: The timezone to check for DST (e.g., 'America/New_York').
+- returns: true if the date is in DST for the specified timezone, false otherwise.
+
+---
+```typescript
+findDSTTransitions(year: number, timezone: string): { start: Date | null; end: Date | null }
+```
+
+Finds the exact DST transition times for a given year in a specific timezone.
+- year: The year to find DST transitions for.
+- timezone: The timezone to check (e.g., 'America/New_York').
+- returns: An object with start and end properties containing the DST transition dates, or null if no DST.
 
 ## 📝 Contributing
 Contributions are welcome! Please follow these steps:
