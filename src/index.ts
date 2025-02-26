@@ -224,11 +224,8 @@ export class ChronoBox<TFormat extends DateFormat | CustomFormat = DateFormat> {
       return this.date.getTime() > otherDate.getTime();
     }
 
-    // For other granularities, we need to truncate both dates to the specified unit
     const thisDateTruncated = truncateDate(this.date, granularity).getTime();
     const otherDateTruncated = truncateDate(otherDate, granularity).getTime();
-    console.log("thisDateTruncated:", thisDateTruncated);
-    console.log("otherDateTruncated:", otherDateTruncated);
 
     return thisDateTruncated > otherDateTruncated;
   }
@@ -249,7 +246,6 @@ export class ChronoBox<TFormat extends DateFormat | CustomFormat = DateFormat> {
       return this.date.getTime() < otherDate.getTime();
     }
 
-    // For other granularities, we need to truncate both dates to the specified unit
     const thisDateTruncated = truncateDate(this.date, granularity).getTime();
     const otherDateTruncated = truncateDate(otherDate, granularity).getTime();
 
