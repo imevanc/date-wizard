@@ -251,4 +251,254 @@ export class ChronoBox<TFormat extends DateFormat | CustomFormat = DateFormat> {
 
     return thisDateTruncated < otherDateTruncated;
   }
+
+  /**
+   * Converts a date from one timezone to another
+   * @param date The date to convert
+   * @param fromTimezone The source timezone (e.g., 'America/New_York')
+   * @param toTimezone The target timezone (e.g., 'Europe/London')
+   * @returns A new Date object representing the same moment in the target timezone
+   */
+  convertTimezone(
+    date: Date | ChronoBox,
+    fromTimezone: string,
+    toTimezone: string
+  ): Date {
+    // Ensure we're working with a Date object
+    const dateObj = date instanceof ChronoBox ? date.toDate() : date;
+
+    // Get the input date as an ISO string without timezone info
+    const year = dateObj.getFullYear();
+    const month = dateObj.getMonth();
+    const day = dateObj.getDate();
+    const hours = dateObj.getHours();
+    const minutes = dateObj.getMinutes();
+    const seconds = dateObj.getSeconds();
+    const milliseconds = dateObj.getMilliseconds();
+
+    // Create date strings for the respective timezones
+    const fromDateString = new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+      timeZone: fromTimezone,
+      hour12: false,
+    }).format(
+      new Date(year, month, day, hours, minutes, seconds, milliseconds)
+    );
+
+    // Parse the date in the original timezone
+    const fromDate = new Date(fromDateString + " GMT");
+
+    // Get the UTC timestamp
+    const timestamp = fromDate.getTime();
+
+    // Create a formatter for the target timezone
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+      timeZone: toTimezone,
+      hour12: false,
+    });
+
+    // Format the timestamp in the target timezone
+    const toDateString = formatter.format(new Date(timestamp));
+
+    // Return the date in the target timezone
+    return new Date(toDateString + " GMT");
+  }
+
+  /**
+   * Checks if a date is in Daylight Saving Time (DST) for a specific timezone
+   * @param date The date to check
+   * @param timezone The timezone to check for DST (e.g., 'America/New_York')
+   * @returns True if the date is in DST for the specified timezone, false otherwise
+   */
+  isInDST(date: Date | ChronoBox, timezone: string): boolean {
+    const dateObj = date instanceof ChronoBox ? date.toDate() : date;
+
+    // Get the timezone offset in January (likely to be standard time)
+    const janDate = new Date(dateObj.getFullYear(), 0, 1);
+    const janOffset = this.getTimezoneOffsetMinutes(janDate, timezone);
+
+    // Get the timezone offset in July (likely to be DST if applicable)
+    const julyDate = new Date(dateObj.getFullYear(), 6, 1);
+    const julyOffset = this.getTimezoneOffsetMinutes(julyDate, timezone);
+
+    // If offset in January and July are the same, the timezone doesn't observe DST
+    if (janOffset === julyOffset) {
+      return false;
+    }
+
+    // Get the offset for the input date
+    const dateOffset = this.getTimezoneOffsetMinutes(dateObj, timezone);
+
+    // Compare with the standard time offset (January)
+    // If they're different, it's likely DST
+    return dateOffset !== Math.max(janOffset, julyOffset);
+  }
+
+  /**
+   * Gets the timezone offset in minutes for a date in a specific timezone
+   * @param date The date to get the offset for
+   * @param timezone The timezone to get the offset for (e.g., 'America/New_York')
+   * @returns The timezone offset in minutes (positive for timezones behind UTC, negative for timezones ahead of UTC)
+   */
+  getTimezoneOffsetMinutes(date: Date | ChronoBox, timezone: string): number {
+    const dateObj = date instanceof ChronoBox ? date.toDate() : date;
+
+    // Format the date in the specified timezone and UTC
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+      hour12: false,
+    });
+
+    const utcFormatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: "UTC",
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+      hour12: false,
+    });
+
+    // Parse the formatted dates
+    const zonedTime = new Date(formatter.format(dateObj) + " GMT");
+    const utcTime = new Date(utcFormatter.format(dateObj) + " GMT");
+
+    // Calculate the offset in minutes
+    return (utcTime.getTime() - zonedTime.getTime()) / 60000;
+  }
+
+  /**
+   * Helper function to find the exact hour of a DST transition using binary search
+   * @param startDate The day before the transition
+   * @param endDate The day of the transition
+   * @param timezone The timezone to check
+   * @returns The exact date and time of the transition
+   */
+  findExactTransitionHour(
+    startDate: Date,
+    endDate: Date,
+    timezone: string
+  ): Date {
+    let start = startDate.getTime();
+    let end = endDate.getTime();
+    const startOffset = this.getTimezoneOffsetMinutes(
+      new Date(start),
+      timezone
+    );
+
+    // Binary search to find the exact transition time
+    while (end - start > 60000) {
+      // Search until we're within a minute
+      const mid = Math.floor((start + end) / 2);
+      const midDate = new Date(mid);
+      const midOffset = this.getTimezoneOffsetMinutes(midDate, timezone);
+
+      if (midOffset === startOffset) {
+        start = mid;
+      } else {
+        end = mid;
+      }
+    }
+
+    return new Date(end);
+  }
+
+  /**
+   * Finds the exact DST transition times for a given year in a specific timezone
+   * @param year The year to find DST transitions for
+   * @param timezone The timezone to check (e.g., 'America/New_York')
+   * @returns An object with 'start' and 'end' properties containing the DST transition dates, or null if no DST
+   */
+  findDSTTransitions(
+    year: number,
+    timezone: string
+  ): { start: Date | null; end: Date | null } {
+    // Get the first day of the year
+    const startDate = new Date(Date.UTC(year, 0, 1));
+
+    // Initialize result
+    const result = {
+      start: null as Date | null,
+      end: null as Date | null,
+    };
+
+    // Check if the timezone has DST by comparing January and July
+    const janOffset = this.getTimezoneOffsetMinutes(startDate, timezone);
+    const julyOffset = this.getTimezoneOffsetMinutes(
+      new Date(Date.UTC(year, 6, 1)),
+      timezone
+    );
+
+    if (janOffset === julyOffset) {
+      // No DST in this timezone
+      return result;
+    }
+
+    // Standard time has a larger offset (more minutes from UTC)
+    const isStandardTimeInJanuary = janOffset > julyOffset;
+
+    let transitionFound = false;
+    let previousOffset = janOffset;
+
+    // Check each day of the year to find transitions
+    for (let day = 2; day <= 366; day++) {
+      const currentDate = new Date(Date.UTC(year, 0, day));
+
+      // Stop if we've gone past December 31
+      if (currentDate.getUTCFullYear() > year) {
+        break;
+      }
+
+      const currentOffset = this.getTimezoneOffsetMinutes(
+        currentDate,
+        timezone
+      );
+
+      // Check if offset changed
+      if (currentOffset !== previousOffset) {
+        // Find the exact hour of transition by binary search
+        const transitionDate = this.findExactTransitionHour(
+          new Date(Date.UTC(year, 0, day - 1)),
+          currentDate,
+          timezone
+        );
+
+        if (!result.start && isStandardTimeInJanuary) {
+          result.start = transitionDate;
+        } else if (!result.end && !isStandardTimeInJanuary) {
+          result.start = transitionDate;
+        } else if (!result.end) {
+          result.end = transitionDate;
+        } else {
+          // This is unexpected - more than two transitions
+          break;
+        }
+
+        transitionFound = true;
+        previousOffset = currentOffset;
+      }
+    }
+
+    return result;
+  }
 }
+
+export type ChronoBoxInstance = typeof ChronoBox;
