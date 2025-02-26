@@ -251,4 +251,217 @@ export class ChronoBox<TFormat extends DateFormat | CustomFormat = DateFormat> {
 
     return thisDateTruncated < otherDateTruncated;
   }
+
+  /**
+   * Converts a date from one timezone to another
+   * @param date The date to convert
+   * @param fromTimezone The source timezone (e.g., 'America/New_York')
+   * @param toTimezone The target timezone (e.g., 'Europe/London')
+   * @returns A new Date object representing the same moment in the target timezone
+   */
+  convertTimezone(
+    date: Date | ChronoBox,
+    fromTimezone: string,
+    toTimezone: string
+  ): Date {
+    const dateObj = date instanceof ChronoBox ? date.toDate() : date;
+
+    const year = dateObj.getFullYear();
+    const month = dateObj.getMonth();
+    const day = dateObj.getDate();
+    const hours = dateObj.getHours();
+    const minutes = dateObj.getMinutes();
+    const seconds = dateObj.getSeconds();
+    const milliseconds = dateObj.getMilliseconds();
+
+    const fromDateString = new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+      timeZone: fromTimezone,
+      hour12: false,
+    }).format(
+      new Date(year, month, day, hours, minutes, seconds, milliseconds)
+    );
+
+    const fromDate = new Date(fromDateString + " GMT");
+
+    const timestamp = fromDate.getTime();
+
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+      timeZone: toTimezone,
+      hour12: false,
+    });
+
+    const toDateString = formatter.format(new Date(timestamp));
+
+    return new Date(toDateString + " GMT");
+  }
+
+  /**
+   * Gets the timezone offset in minutes for a date in a specific timezone
+   * @param date The date to get the offset for
+   * @param timezone The timezone to get the offset for (e.g., 'America/New_York')
+   * @returns The timezone offset in minutes (positive for timezones behind UTC, negative for timezones ahead of UTC)
+   */
+  getTimezoneOffsetMinutes(date: Date | ChronoBox, timezone: string): number {
+    const dateObj = date instanceof ChronoBox ? date.toDate() : date;
+
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+      hour12: false,
+    });
+
+    const utcFormatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: "UTC",
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+      hour12: false,
+    });
+
+    const zonedTime = new Date(formatter.format(dateObj) + " GMT");
+    const utcTime = new Date(utcFormatter.format(dateObj) + " GMT");
+
+    return (utcTime.getTime() - zonedTime.getTime()) / 60000;
+  }
+
+  /**
+   * Helper function to find the exact hour of a DST transition using binary search
+   * @param startDate The day before the transition
+   * @param endDate The day of the transition
+   * @param timezone The timezone to check
+   * @returns The exact date and time of the transition
+   */
+  findExactTransitionHour(
+    startDate: Date,
+    endDate: Date,
+    timezone: string
+  ): Date {
+    let start = startDate.getTime();
+    let end = endDate.getTime();
+    const startOffset = this.getTimezoneOffsetMinutes(
+      new Date(start),
+      timezone
+    );
+
+    while (end - start > 60000) {
+      const mid = Math.floor((start + end) / 2);
+      const midDate = new Date(mid);
+      const midOffset = this.getTimezoneOffsetMinutes(midDate, timezone);
+
+      if (midOffset === startOffset) {
+        start = mid;
+      } else {
+        end = mid;
+      }
+    }
+
+    return new Date(end);
+  }
+
+  /**
+   * Checks if a date is in Daylight Saving Time (DST) for a specific timezone
+   * @param date The date to check
+   * @param timezone The timezone to check for DST (e.g., 'America/New_York')
+   * @returns True if the date is in DST for the specified timezone, false otherwise
+   */
+  isInDST(date: Date | ChronoBox, timezone: string): boolean {
+    const dateObj = date instanceof ChronoBox ? date.toDate() : date;
+
+    const janDate = new Date(dateObj.getFullYear(), 0, 1);
+    const janOffset = this.getTimezoneOffsetMinutes(janDate, timezone);
+
+    const julyDate = new Date(dateObj.getFullYear(), 6, 1);
+    const julyOffset = this.getTimezoneOffsetMinutes(julyDate, timezone);
+
+    if (janOffset === julyOffset) {
+      return false;
+    }
+
+    const dateOffset = this.getTimezoneOffsetMinutes(dateObj, timezone);
+
+    return dateOffset === Math.max(janOffset, julyOffset);
+  }
+
+  /**
+   * Finds the exact DST transition times for a given year in a specific timezone
+   * @param year The year to find DST transitions for
+   * @param timezone The timezone to check (e.g., 'America/New_York')
+   * @returns An object with 'start' and 'end' properties containing the DST transition dates, or null if no DST
+   */
+  findDSTTransitions(
+    year: number,
+    timezone: string
+  ): { start: Date | null; end: Date | null } {
+    const startDate = new Date(Date.UTC(year, 0, 1));
+
+    const result = {
+      start: null as Date | null,
+      end: null as Date | null,
+    };
+
+    const janOffset = this.getTimezoneOffsetMinutes(startDate, timezone);
+    const julyOffset = this.getTimezoneOffsetMinutes(
+      new Date(Date.UTC(year, 6, 1)),
+      timezone
+    );
+
+    if (janOffset === julyOffset) {
+      return result;
+    }
+
+    let previousOffset = janOffset;
+    let foundTransitions = 0;
+
+    for (let day = 2; day <= 366; day++) {
+      const currentDate = new Date(Date.UTC(year, 0, day));
+
+      if (currentDate.getUTCFullYear() > year) {
+        break;
+      }
+
+      const currentOffset = this.getTimezoneOffsetMinutes(
+        currentDate,
+        timezone
+      );
+
+      if (currentOffset !== previousOffset) {
+        const transitionDate = this.findExactTransitionHour(
+          new Date(Date.UTC(year, 0, day - 1)),
+          currentDate,
+          timezone
+        );
+
+        if (!result.start) {
+          result.start = transitionDate;
+        } else if (!result.end) {
+          result.end = transitionDate;
+        }
+
+        foundTransitions++;
+        previousOffset = currentOffset;
+      }
+    }
+
+    return result;
+  }
 }

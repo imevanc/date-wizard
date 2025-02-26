@@ -1,7 +1,8 @@
-import { ChronoBox } from "../src";
 import { DateFormat, TimeUnit } from "../src/enums";
 import { ChronoBoxError } from "../src/errors";
 import { truncateDate } from "../src/utils";
+import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { ChronoBox } from "../src";
 
 describe("diff", () => {
   const baseDate = new ChronoBox("2024-01-15");
@@ -315,5 +316,356 @@ describe("isBefore", () => {
     expect(() =>
       base.isBefore(later.toDate(), "INVALID_UNIT" as TimeUnit)
     ).toThrow();
+  });
+});
+
+describe("ChronoBox Timezone Functions", () => {
+  let chronoBox: ChronoBox;
+
+  beforeEach(() => {
+    // Mock the Intl.DateTimeFormat implementation for testing
+    const mockDateTimeFormat = jest
+      .spyOn(Intl, "DateTimeFormat")
+      .mockImplementation((locale, options) => {
+        return {
+          format: (date: Date) => {
+            // This is a simplified mock - in real tests you might need more complex logic
+            if (options?.timeZone === "America/New_York") {
+              return "1/1/2023 10:00:00"; // -5 hours from UTC
+            } else if (options?.timeZone === "Europe/London") {
+              return "1/1/2023 15:00:00"; // +0 hours from UTC
+            } else if (options?.timeZone === "Asia/Tokyo") {
+              return "1/2/2023 0:00:00"; // +9 hours from UTC
+            } else if (options?.timeZone === "UTC") {
+              return "1/1/2023 15:00:00"; // UTC time
+            }
+            return date.toLocaleString();
+          },
+          resolvedOptions: () => ({
+            ...options,
+            locale: locale || "en-US",
+          }),
+        } as Intl.DateTimeFormat;
+      });
+
+    chronoBox = new ChronoBox(new Date("2023-01-01T15:00:00Z"));
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  describe("convertTimezone", () => {
+    it("should convert a date from one timezone to another", () => {
+      const result = chronoBox.convertTimezone(
+        new Date("2023-01-01T15:00:00Z"),
+        "UTC",
+        "America/New_York"
+      );
+
+      // With our mock, we expect the result to be a date representing 10:00 AM
+      expect(result.getHours()).toBe(10);
+      expect(result.getMinutes()).toBe(0);
+    });
+
+    it("should work with ChronoBox instances", () => {
+      const anotherChronoBox = new ChronoBox(new Date("2023-01-01T20:00:00Z"));
+      const result = chronoBox.convertTimezone(
+        anotherChronoBox,
+        "UTC",
+        "Europe/London"
+      );
+
+      // Verify the result is a Date object
+      expect(result instanceof Date).toBe(true);
+    });
+
+    it("should handle crossing date boundaries", () => {
+      // Test converting from UTC to Tokyo (crosses day boundary)
+      const result = chronoBox.convertTimezone(
+        new Date("2023-01-01T15:00:00Z"),
+        "UTC",
+        "Asia/Tokyo"
+      );
+
+      // With our mock, expect the result to be January 2nd
+      expect(result.getDate()).toBe(2);
+    });
+  });
+
+  describe("isInDST", () => {
+    it("should return false for timezones without DST", () => {
+      // Mock implementation for this test
+      jest
+        .spyOn(chronoBox, "getTimezoneOffsetMinutes")
+        .mockImplementation((date, timezone) => {
+          if (timezone === "Asia/Tokyo") return -540; // No DST - constant offset
+          return 0;
+        });
+
+      const result = chronoBox.isInDST(new Date(), "Asia/Tokyo");
+      expect(result).toBe(false);
+    });
+
+    it("should return true for dates during DST", () => {
+      // Mock to simulate a date in summer for US Eastern Time
+      jest
+        .spyOn(chronoBox, "getTimezoneOffsetMinutes")
+        .mockImplementation((date, timezone) => {
+          if (timezone === "America/New_York") {
+            // For the test date, return DST offset
+            const dateObj = date instanceof ChronoBox ? date.toDate() : date;
+            if (dateObj.getMonth() === 6) return -240; // July (DST active, -4 hours)
+            if (dateObj.getMonth() === 0) return -300; // January (no DST, -5 hours)
+            return -240; // For the actual date being tested (DST active)
+          }
+          return 0;
+        });
+
+      const summerDate = new Date("2023-07-15T12:00:00Z");
+      const result = chronoBox.isInDST(summerDate, "America/New_York");
+      expect(result).toBe(true);
+    });
+
+    it("should return false for dates outside DST", () => {
+      // Mock to simulate a date in winter for US Eastern Time
+      jest
+        .spyOn(chronoBox, "getTimezoneOffsetMinutes")
+        .mockImplementation((date, timezone) => {
+          if (timezone === "America/New_York") {
+            // For the test date, return standard time offset
+            const dateObj = date instanceof ChronoBox ? date.toDate() : date;
+            if (dateObj.getMonth() === 6) return -240; // July (DST active, -4 hours)
+            if (dateObj.getMonth() === 0) return -300; // January (no DST, -5 hours)
+            return -300; // For the actual date being tested (standard time)
+          }
+          return 0;
+        });
+
+      const winterDate = new Date("2023-01-15T12:00:00Z");
+      const result = chronoBox.isInDST(winterDate, "America/New_York");
+      expect(result).toBe(false);
+    });
+
+    it("should work with ChronoBox instances", () => {
+      // Setup the mock
+      jest
+        .spyOn(chronoBox, "getTimezoneOffsetMinutes")
+        .mockImplementation((date, timezone) => {
+          if (timezone === "America/New_York") {
+            const dateObj = date instanceof ChronoBox ? date.toDate() : date;
+            if (dateObj.getMonth() === 6) return -240;
+            if (dateObj.getMonth() === 0) return -300;
+            // This date should be in summer (DST)
+            return -240;
+          }
+          return 0;
+        });
+
+      const summerBox = new ChronoBox(new Date("2023-07-15T12:00:00Z"));
+      const result = chronoBox.isInDST(summerBox, "America/New_York");
+      expect(result).toBe(true);
+    });
+  });
+
+  describe("getTimezoneOffsetMinutes", () => {
+    it("should return positive offset for timezones behind UTC", () => {
+      // Mock implementation
+      jest
+        .spyOn(Intl, "DateTimeFormat")
+        .mockImplementation((locale, options) => {
+          return {
+            format: (date: Date) => {
+              if (options?.timeZone === "America/New_York") {
+                // Simulate NY being 5 hours behind UTC
+                const nyDate = new Date(date);
+                nyDate.setHours(date.getHours() - 5);
+                return nyDate.toLocaleString();
+              } else if (options?.timeZone === "UTC") {
+                return date.toLocaleString();
+              }
+              return date.toLocaleString();
+            },
+            resolvedOptions: () => ({ ...options, locale: locale || "en-US" }),
+          } as Intl.DateTimeFormat;
+        });
+
+      // In real implementation, this would return 300 (5 hours = 300 minutes) for NY
+      const result = chronoBox.getTimezoneOffsetMinutes(
+        new Date(),
+        "America/New_York"
+      );
+      expect(result).toBeGreaterThan(0);
+    });
+
+    it("should return negative offset for timezones ahead of UTC", () => {
+      // Mock implementation
+      jest
+        .spyOn(Intl, "DateTimeFormat")
+        .mockImplementation((locale, options) => {
+          return {
+            format: (date: Date) => {
+              if (options?.timeZone === "Asia/Tokyo") {
+                // Simulate Tokyo being 9 hours ahead of UTC
+                const tokyoDate = new Date(date);
+                tokyoDate.setHours(date.getHours() + 9);
+                return tokyoDate.toLocaleString();
+              } else if (options?.timeZone === "UTC") {
+                return date.toLocaleString();
+              }
+              return date.toLocaleString();
+            },
+            resolvedOptions: () => ({ ...options, locale: locale || "en-US" }),
+          } as Intl.DateTimeFormat;
+        });
+
+      // In real implementation, this would return -540 (9 hours = 540 minutes) for Tokyo
+      const result = chronoBox.getTimezoneOffsetMinutes(
+        new Date(),
+        "Asia/Tokyo"
+      );
+      expect(result).toBeLessThan(0);
+    });
+
+    it("should work with ChronoBox instances", () => {
+      const testBox = new ChronoBox(new Date());
+      const result = chronoBox.getTimezoneOffsetMinutes(
+        testBox,
+        "Europe/London"
+      );
+
+      // Just verify it runs without error when given a ChronoBox
+      expect(typeof result).toBe("number");
+    });
+  });
+
+  describe("findDSTTransitions", () => {
+    it("should return null values for timezones without DST", () => {
+      // Mock implementation
+      jest
+        .spyOn(chronoBox, "getTimezoneOffsetMinutes")
+        .mockImplementation((date, timezone) => {
+          if (timezone === "Asia/Tokyo") return -540; // No DST
+          return 0;
+        });
+
+      const result = chronoBox.findDSTTransitions(2023, "Asia/Tokyo");
+      expect(result.start).toBeNull();
+      expect(result.end).toBeNull();
+    });
+
+    it("should find DST transitions for timezones with DST", () => {
+      // Mock implementation to simulate DST transitions
+      jest
+        .spyOn(chronoBox, "getTimezoneOffsetMinutes")
+        .mockImplementation((date, timezone) => {
+          if (timezone === "America/New_York") {
+            // Simplified DST logic for testing
+            const dateObj = date instanceof ChronoBox ? date.toDate() : date;
+            const month = dateObj.getMonth();
+            // March-November is DST period in this simplified test
+            return month >= 2 && month <= 10 ? -240 : -300;
+          }
+          return 0;
+        });
+
+      // Mock the helper function
+      jest
+        .spyOn(chronoBox, "findExactTransitionHour")
+        .mockImplementation((start, end, timezone) => {
+          if (end.getMonth() === 2) {
+            // March
+            return new Date("2023-03-12T07:00:00Z"); // Spring forward
+          } else {
+            return new Date("2023-11-05T06:00:00Z"); // Fall back
+          }
+        });
+
+      const result = chronoBox.findDSTTransitions(2023, "America/New_York");
+
+      // Should find both transitions
+      expect(result.start).not.toBeNull();
+      expect(result.end).not.toBeNull();
+
+      // Check transition dates (based on our mock implementation)
+      if (result.start && result.end) {
+        expect(result.start.getMonth()).toBe(2); // March
+        expect(result.end.getMonth()).toBe(10); // November
+      }
+    });
+
+    it("should handle southern hemisphere DST", () => {
+      // Mock for southern hemisphere where DST is opposite
+      jest
+        .spyOn(chronoBox, "getTimezoneOffsetMinutes")
+        .mockImplementation((date, timezone) => {
+          if (timezone === "Australia/Sydney") {
+            const dateObj = date instanceof ChronoBox ? date.toDate() : date;
+            const month = dateObj.getMonth();
+            // April-September is standard time, October-March is DST
+            return month >= 3 && month <= 8 ? -600 : -660;
+          }
+          return 0;
+        });
+
+      // Mock the helper function
+      jest
+        .spyOn(chronoBox, "findExactTransitionHour")
+        .mockImplementation((start, end, timezone) => {
+          if (end.getMonth() === 9) {
+            // October
+            return new Date("2023-10-01T16:00:00Z"); // Spring forward
+          } else {
+            return new Date("2023-04-02T16:00:00Z"); // Fall back
+          }
+        });
+
+      const result = chronoBox.findDSTTransitions(2023, "Australia/Sydney");
+
+      // Should find both transitions
+      expect(result.start).not.toBeNull();
+      expect(result.end).not.toBeNull();
+
+      // Check transitions match southern hemisphere pattern
+      if (result.start && result.end) {
+        expect([3, 9]).toContain(result.start.getMonth()); // April or October
+        expect([3, 9]).toContain(result.end.getMonth()); // April or October
+      }
+    });
+  });
+
+  describe("findExactTransitionHour", () => {
+    it("should find the exact transition hour using binary search", () => {
+      // Mock implementation
+      let callCount = 0;
+      jest
+        .spyOn(chronoBox, "getTimezoneOffsetMinutes")
+        .mockImplementation((date, timezone) => {
+          callCount++;
+          // Simulate a transition at exactly 2:00 AM on March 12, 2023
+          const testDate = date instanceof ChronoBox ? date.toDate() : date;
+          const transitionTime = new Date("2023-03-12T07:00:00Z").getTime(); // 2 AM EST / 7 AM UTC
+
+          return testDate.getTime() < transitionTime ? -300 : -240;
+        });
+
+      const beforeTransition = new Date("2023-03-12T06:00:00Z"); // 1 AM EST
+      const afterTransition = new Date("2023-03-12T08:00:00Z"); // 3 AM EDT
+
+      const result = chronoBox.findExactTransitionHour(
+        beforeTransition,
+        afterTransition,
+        "America/New_York"
+      );
+
+      // Check that binary search was actually used (multiple calls to getTimezoneOffsetMinutes)
+      expect(callCount).toBeGreaterThan(3);
+
+      // The result should be very close to the actual transition time
+      const transitionTime = new Date("2023-03-12T07:00:00Z").getTime();
+      expect(Math.abs(result.getTime() - transitionTime)).toBeLessThanOrEqual(
+        60000
+      ); // Within 1 minute
+    });
   });
 });
