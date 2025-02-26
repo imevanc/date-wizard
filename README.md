@@ -61,19 +61,10 @@ getComponents(): DateComponents
 ```
 Returns the individual components (year, month, day, hours, minutes, seconds, milliseconds) of the date.
 
-- returns: An object with the following structure: 
-```typescript
-{
-  year: number;
-  month: number;
-  day: number;
-  hours: number;
-  minutes: number;
-  seconds: number;
-  milliseconds: number;
-}
-```
+- returns: An object with the above structure.
+
 ---
+
 ```typescript
 formatDate(): string
 ```
@@ -104,6 +95,28 @@ Creates a new ChronoBox instance with a different format.
 
 - newFormat: The new format for the date.
 - returns: A new ChronoBox instance with the updated format.
+
+---
+```typescript
+isAfter(other: DateInput, granularity: TimeUnit = TimeUnit.MILLISECONDS): boolean
+```
+
+Checks if this date is after the specified date.
+- other: The date to compare against.
+- granularity: The time unit granularity for comparison (defaults to milliseconds for exact comparison).
+- returns: true if this date is after the specified date.
+
+
+---
+```typescript
+isBefore(other: DateInput, granularity: TimeUnit = TimeUnit.MILLISECONDS): boolean
+```
+
+Checks if this date is before the specified date.
+- other: The date to compare against.
+- granularity: The time unit granularity for comparison (defaults to milliseconds for exact comparison).
+- returns: true if this date is before the specified date.
+
 
 ## 📝 Contributing
 Contributions are welcome! Please follow these steps:
