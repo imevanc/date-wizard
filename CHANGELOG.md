@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/imevanc/chronobox/compare/v1.3.0...v1.3.1) (2025-02-26)
+
+
+### Bug Fixes
+
+* update readme with isAfter and isBefore ([#19](https://github.com/imevanc/chronobox/issues/19)) ([93558c6](https://github.com/imevanc/chronobox/commit/93558c663fce7e920e71c1c8b7112b1ba298d36c))
+
 # [1.3.0](https://github.com/imevanc/chronobox/compare/v1.2.1...v1.3.0) (2025-02-26)
 
 
