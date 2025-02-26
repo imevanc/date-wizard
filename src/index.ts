@@ -1,7 +1,7 @@
 import type { CustomFormat, DateComponents, DateInput } from "./types.d.ts";
 
 import { ChronoBoxError } from "./errors";
-import { isValidTimeUnit } from "./utils";
+import { isValidTimeUnit, truncateDate } from "./utils";
 import { DateFormat, TimeUnit } from "./enums";
 
 export class ChronoBox<TFormat extends DateFormat | CustomFormat = DateFormat> {
@@ -206,5 +206,53 @@ export class ChronoBox<TFormat extends DateFormat | CustomFormat = DateFormat> {
     newFormat: NewFormat
   ): ChronoBox<NewFormat> {
     return new ChronoBox<NewFormat>(this.date, newFormat);
+  }
+
+  /**
+   * Check if this date is after the specified date
+   * @param other The date to compare against
+   * @param granularity The time unit granularity for comparison (defaults to milliseconds for exact comparison)
+   * @returns True if this date is after the specified date
+   */
+  isAfter(
+    other: DateInput,
+    granularity: TimeUnit = TimeUnit.MILLISECONDS
+  ): boolean {
+    const otherDate = new Date(other);
+
+    if (granularity === TimeUnit.MILLISECONDS) {
+      return this.date.getTime() > otherDate.getTime();
+    }
+
+    // For other granularities, we need to truncate both dates to the specified unit
+    const thisDateTruncated = truncateDate(this.date, granularity).getTime();
+    const otherDateTruncated = truncateDate(otherDate, granularity).getTime();
+    console.log("thisDateTruncated:", thisDateTruncated);
+    console.log("otherDateTruncated:", otherDateTruncated);
+
+    return thisDateTruncated > otherDateTruncated;
+  }
+
+  /**
+   * Check if this date is before the specified date
+   * @param other The date to compare against
+   * @param granularity The time unit granularity for comparison (defaults to milliseconds for exact comparison)
+   * @returns True if this date is before the specified date
+   */
+  isBefore(
+    other: DateInput,
+    granularity: TimeUnit = TimeUnit.MILLISECONDS
+  ): boolean {
+    const otherDate = new Date(other);
+
+    if (granularity === TimeUnit.MILLISECONDS) {
+      return this.date.getTime() < otherDate.getTime();
+    }
+
+    // For other granularities, we need to truncate both dates to the specified unit
+    const thisDateTruncated = truncateDate(this.date, granularity).getTime();
+    const otherDateTruncated = truncateDate(otherDate, granularity).getTime();
+
+    return thisDateTruncated < otherDateTruncated;
   }
 }
