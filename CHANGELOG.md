@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/imevanc/chronobox/compare/v1.2.1...v1.3.0) (2025-02-26)
+
+
+### Features
+
+* create data comparison functions ([#18](https://github.com/imevanc/chronobox/issues/18)) ([9a3d489](https://github.com/imevanc/chronobox/commit/9a3d48922b6a3f0224ef68bec8a734373dae6ad9))
+
 ## [1.2.1](https://github.com/imevanc/chronobox/compare/v1.2.0...v1.2.1) (2025-02-25)
 
 
